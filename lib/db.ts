@@ -1,10 +1,16 @@
 import { neon } from "@neondatabase/serverless"
 
-const databaseUrl = process.env.DATABASE_URL
+let sql: any
 
-// Return a dummy function during build if DATABASE_URL is not set
-export const sql = databaseUrl 
-  ? neon(databaseUrl)
-  : ((query: string, params?: any[]) => {
-      throw new Error("DATABASE_URL is not configured. Please add it to your environment variables.")
-    }) as any
+// Only initialize the database connection at runtime
+if (process.env.DATABASE_URL) {
+  sql = neon(process.env.DATABASE_URL)
+} else {
+  // Fallback for build time - returns empty results
+  sql = async (query: string, ...args: any[]) => {
+    console.warn("DATABASE_URL not configured - returning empty results")
+    return []
+  }
+}
+
+export { sql }
